@@ -7,7 +7,9 @@ import { Home, PenLine, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Logo } from "@/components/brand/logo";
 import { ThemeToggle } from "@/components/theme/theme-toggle";
+import { UserMenu } from "@/components/layout/user-menu";
 import { useDemoStore } from "@/lib/demo/store";
+import { useDemoAuth } from "@/lib/auth/config";
 
 const navItems = [
   { href: "/dashboard", label: "Home", icon: Home },
@@ -15,9 +17,15 @@ const navItems = [
   { href: "/submit", label: "Submit", icon: Upload },
 ];
 
-export function AppNav() {
+interface AppNavProps {
+  streak?: number;
+  userName?: string | null;
+}
+
+export function AppNav({ streak: serverStreak, userName }: AppNavProps = {}) {
   const pathname = usePathname();
-  const streak = useDemoStore((s) => s.streak);
+  const demoStreak = useDemoStore((s) => s.streak);
+  const streak = useDemoAuth() ? demoStreak : (serverStreak ?? 0);
 
   return (
     <>
@@ -33,6 +41,7 @@ export function AppNav() {
                 <Link
                   key={item.href}
                   href={item.href}
+                  aria-current={active ? "page" : undefined}
                   className={cn(
                     "relative rounded-lg px-3 py-1.5 text-sm font-medium transition-colors",
                     active ? "text-foreground" : "text-[var(--muted)] hover:text-foreground"
@@ -50,12 +59,8 @@ export function AppNav() {
               );
             })}
           </nav>
-          <div className="flex items-center gap-3">
-            {streak > 0 && (
-              <span className="text-sm font-semibold text-[var(--brand-yellow)]">
-                🔥 {streak}
-              </span>
-            )}
+          <div className="flex items-center gap-2">
+            <UserMenu streak={streak} userName={userName} />
             <ThemeToggle />
           </div>
         </div>
@@ -70,6 +75,7 @@ export function AppNav() {
               <Link
                 key={item.href}
                 href={item.href}
+                aria-current={active ? "page" : undefined}
                 className={cn(
                   "relative flex flex-1 flex-col items-center gap-1 rounded-xl py-2 text-[10px] font-medium transition-colors",
                   active ? "text-[var(--brand-blue)]" : "text-[var(--muted)]"

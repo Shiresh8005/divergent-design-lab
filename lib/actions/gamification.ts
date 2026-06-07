@@ -4,16 +4,53 @@ import { createClient } from "@/lib/supabase/server";
 import { calculateChallengeXp, getLevelFromXp } from "@/lib/gamification/xp";
 import { updateStreakOnCompletion } from "@/lib/gamification/streak";
 import type { ChallengeDifficulty } from "@/lib/types/database";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/auth/config";
 
 export async function awardXpForChallenge(
-  userId: string,
-  challengeId: string,
+  challengeSlug: string,
   baseXp: number,
   difficulty: ChallengeDifficulty
 ) {
-  if (!isSupabaseConfigured()) return { xpEarned: 0, newTotal: 0 };
+  if (!isSupabaseConfigured()) return { xpEarned: 0, newTotal: 0, newLevel: 1 };
 
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return { xpEarned: 0, newTotal: 0, newLevel: 1, error: "Not authenticated" };
+
+  const { data, error } = await supabase.rpc("award_challenge_xp", {
+    p_challenge_slug: challengeSlug,
+    p_base_xp: baseXp,
+    p_difficulty: difficulty,
+  });
+
+  if (error) {
+    // Fallback for pre-migration databases
+    return awardXpForChallengeLegacy(user.id, challengeSlug, baseXp, difficulty);
+  }
+
+  const result = data as {
+    xpEarned: number;
+    newTotal: number;
+    newLevel: number;
+    alreadyAwarded?: boolean;
+  };
+
+  return {
+    xpEarned: result.xpEarned,
+    newTotal: result.newTotal,
+    newLevel: result.newLevel,
+  };
+}
+
+async function awardXpForChallengeLegacy(
+  userId: string,
+  challengeSlug: string,
+  baseXp: number,
+  difficulty: ChallengeDifficulty
+) {
   const supabase = await createClient();
 
   const { data: streak } = await supabase
@@ -46,7 +83,7 @@ export async function awardXpForChallenge(
     user_id: userId,
     amount: xpEarned,
     source: "challenge_complete",
-    reference_id: challengeId,
+    reference_id: challengeSlug,
     description: `Completed daily challenge`,
   });
 

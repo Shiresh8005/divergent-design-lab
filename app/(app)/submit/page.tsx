@@ -11,8 +11,11 @@ import { QuestionPaper } from "@/components/challenges/question-paper";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { getChallengeById, getTodaysChallenge } from "@/lib/challenges/seed-data";
-import { createSubmission } from "@/lib/actions/submissions";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import {
+  createSubmission,
+  uploadSubmissionImage,
+} from "@/lib/actions/submissions";
+import { isSupabaseConfigured, useDemoAuth } from "@/lib/auth/config";
 import { useDemoStore } from "@/lib/demo/store";
 import { gradeSubmission, type GradingResult } from "@/lib/grading/analyze";
 
@@ -27,6 +30,7 @@ function SubmitForm() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [notes, setNotes] = useState("");
   const [grading, setGrading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GradingResult | null>(null);
 
   const saveGrading = useDemoStore((s) => s.saveGrading);
@@ -35,16 +39,33 @@ function SubmitForm() {
   async function handleSubmit() {
     if (!file || !previewUrl) return;
     setGrading(true);
+    setError(null);
 
     try {
       const graded = await gradeSubmission(file, challenge.category);
       setResult(graded);
 
-      if (!isSupabaseConfigured()) {
+      if (useDemoAuth()) {
         saveGrading(challenge.id, graded, previewUrl);
-      } else {
-        await createSubmission(challenge.id, previewUrl, notes || null);
+      } else if (isSupabaseConfigured()) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const upload = await uploadSubmissionImage(formData);
+        if (!upload.success || !upload.url) {
+          throw new Error(upload.error ?? "Image upload failed");
+        }
+        const saved = await createSubmission(
+          challenge.id,
+          upload.url,
+          notes || null,
+          graded
+        );
+        if (!saved.success) {
+          throw new Error(saved.error ?? "Failed to save submission");
+        }
       }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Submission failed");
     } finally {
       setGrading(false);
     }
@@ -112,6 +133,12 @@ function SubmitForm() {
           className="min-h-[80px] resize-none border-[var(--border-subtle)] bg-[var(--surface-elevated)]"
         />
       </div>
+
+      {error && (
+        <p role="alert" className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-400">
+          {error}
+        </p>
+      )}
 
       <Button
         onClick={handleSubmit}

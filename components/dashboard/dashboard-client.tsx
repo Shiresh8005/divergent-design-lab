@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, Zap } from "lucide-react";
+import { ArrowRight, Images, Trophy, Zap } from "lucide-react";
 import { StatPill } from "@/components/gamification/stat-pill";
 import { WeeklyProgressChart } from "@/components/gamification/weekly-progress";
 import { GlassCard } from "@/components/ui/glass-card";
@@ -152,6 +152,21 @@ export function DashboardClient({
           )}
         </motion.div>
       )}
+
+      <motion.div variants={fadeUp} className="grid grid-cols-2 gap-3">
+        <Link href="/leaderboard">
+          <GlassCard className="flex items-center gap-3 p-4" hover>
+            <Trophy className="h-5 w-5 text-[var(--brand-yellow)]" />
+            <span className="text-sm font-medium">Leaderboard</span>
+          </GlassCard>
+        </Link>
+        <Link href="/gallery">
+          <GlassCard className="flex items-center gap-3 p-4" hover>
+            <Images className="h-5 w-5 text-[var(--brand-blue)]" />
+            <span className="text-sm font-medium">Gallery</span>
+          </GlassCard>
+        </Link>
+      </motion.div>
     </motion.div>
   );
 }

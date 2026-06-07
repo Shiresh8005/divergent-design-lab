@@ -76,7 +76,7 @@ export const useDemoStore = create<DemoState>()(
         const submission: Submission = {
           id: `sub-${challengeId}`,
           user_id: state.user?.id ?? "demo-user",
-          challenge_id: challengeId,
+          challenge_slug: challengeId,
           image_url: imageUrl,
           notes: null,
           status: "submitted",
@@ -110,7 +110,7 @@ export const useDemoStore = create<DemoState>()(
         const submission: Submission = {
           id: `sub-${challengeId}`,
           user_id: state.user?.id ?? "demo-user",
-          challenge_id: challengeId,
+          challenge_slug: challengeId,
           image_url: imageUrl ?? null,
           notes: null,
           status: "completed",

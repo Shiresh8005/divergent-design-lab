@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { useDemoAuth } from "@/lib/auth/config";
 import { getDashboardData } from "@/lib/data/get-dashboard-data";
 import { DashboardClient } from "@/components/dashboard/dashboard-client";
 import { DashboardDemoWrapper } from "@/components/dashboard/dashboard-demo-wrapper";
 
 export default async function DashboardPage() {
-  if (!isSupabaseConfigured()) {
+  if (useDemoAuth()) {
     return <DashboardDemoWrapper />;
   }
 

@@ -41,6 +41,7 @@ export interface Profile {
 
 export interface DailyChallenge {
   id: string;
+  slug?: string;
   title: string;
   description: string;
   prompt_text: string;
@@ -79,7 +80,7 @@ export interface XpLog {
 export interface Submission {
   id: string;
   user_id: string;
-  challenge_id: string;
+  challenge_slug: string;
   image_url: string | null;
   notes: string | null;
   status: SubmissionStatus;
